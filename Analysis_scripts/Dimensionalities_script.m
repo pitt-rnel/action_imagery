@@ -5,7 +5,7 @@ tdim_thresh = 1; % variance threshold for dimensionality estimation
 nboot = 1000; 
 rng(1); 
 
-[AAv,SAv,IIv,SIv,IAv,AIv,...
+[Rdyn, AAv,SAv,IIv,SIv,IAv,AIv,...
     AAv_f,SAv_f,IIv_f,SIv_f,IAv_f,AIv_f,...
     TVARS,FVARS,TAv,TIv,TS,AIDZ] = deal(cell(2,1)); 
 for z = 1:2
@@ -113,7 +113,7 @@ for z = 1:2
         IIv_f{z}(i,1:size(Qboot.unique.C2,2)) = nanvar(muAIf{2}*Qboot.unique.C2*VSC2f); 
         SIv_f{z}(i,1:size(Qboot.shared,2)) = nanvar(muAIf{2}*Qboot.shared*VSS2f);
         AIv_f{z}(i,1:size(Qboot.unique.C1,2)) = nanvar(muAIf{2}*Qboot.unique.C1);
-        
+      
         
     end
 end
@@ -142,11 +142,6 @@ VSFp(2,[3 4]) = cellfun(@(x) (x./repmat(TVARS{2}(:,2),1,size(x,2)))*100,VSF(2,[3
 for q = 1:length(threshs)
     thresh = threshs(q); 
     
-%     VSover(1,[1 2 5]) = cellfun(@(x) (x./repmat(TVARS{1}(:,1),1,size(x,2))) > thresh & x>vImagery_during_Action{1},VS(1,[1 2 5]),'uni',0); 
-%     VSover(2,[1 2 5]) = cellfun(@(x) (x./repmat(TVARS{2}(:,1),1,size(x,2))) > thresh & x>vImagery_during_Action{2},VS(2,[1 2 5]),'uni',0); 
-%     VSover(1,[3 4 6]) = cellfun(@(x) (x./repmat(TVARS{1}(:,2),1,size(x,2))) > thresh & x>vAction_during_Imagery{1},VS(1,[3 4 6]),'uni',0); 
-%     VSover(2,[3 4 6]) = cellfun(@(x) (x./repmat(TVARS{2}(:,2),1,size(x,2))) > thresh & x>vAction_during_Imagery{2},VS(2,[3 4 6]),'uni',0); 
-%     
     VSover(1,[1 2 5]) = cellfun(@(x) (x./repmat(TVARS{1}(:,1),1,size(x,2))) > thresh ,VS(1,[1 2 5]),'uni',0); 
     VSover(2,[1 2 5]) = cellfun(@(x) (x./repmat(TVARS{2}(:,1),1,size(x,2))) > thresh ,VS(2,[1 2 5]),'uni',0); 
     VSover(1,[3 4 6]) = cellfun(@(x) (x./repmat(TVARS{1}(:,2),1,size(x,2))) > thresh ,VS(1,[3 4 6]),'uni',0); 
@@ -166,12 +161,6 @@ for z = 1:2
     DS{z,:}.Force = mat2cell( squeeze(Frange(z,:,:))', size(Frange,3), ones(size(Frange,2),1)); 
 end
 
-
-% Pvals_signrank = cellfun(@(x) [signrank(x.Total{1},x.Total{2}), signrank(x.Total{3},x.Total{4})],DS,'uni',0); 
-% Pvals_signrank_F = cellfun(@(x) [signrank(x.Force{1},x.Force{2}), signrank(x.Force{3},x.Force{4})],DS,'uni',0); 
-% 
-% Pvals_signrank_AI = cellfun(@(x) [signrank(x.Total{1},x.Total{3}), signrank(x.Total{2},x.Total{4})],DS,'uni',0); 
-
 TDimensionalities = Trange(:,:,thresh_1p); 
 FDimensionalities = Frange(:,:,thresh_1p); 
 
@@ -179,6 +168,7 @@ FDimensionalities = Frange(:,:,thresh_1p);
 %% Stats
 % for each bootstrap run, calculate difference in dimensionalities
 threshvec = ones(nboot,1)*0.01; 
+threshvecf = ones(nboot,1)*0.01; 
 [VSo,VSFo] = deal(cell(2,6)); 
 VSo(1,[1 2 5]) = cellfun(@(x) (x./repmat(TVARS{1}(:,1),1,size(x,2)))*100 ,VS(1,[1 2 5]),'uni',0); 
 VSo(2,[1 2 5]) = cellfun(@(x) (x./repmat(TVARS{2}(:,1),1,size(x,2)))*100 ,VS(2,[1 2 5]),'uni',0); 
@@ -191,10 +181,10 @@ VSover_rand(2,[1 2 5]) = cellfun(@(x) sum((x./repmat(TVARS{2}(:,1),1,size(x,2)))
 VSover_rand(1,[3 4 6]) = cellfun(@(x) sum((x./repmat(TVARS{1}(:,2),1,size(x,2))) > repmat(threshvec,1,size(x,2)),2),VS(1,[3 4 6]),'uni',0); 
 VSover_rand(2,[3 4 6]) = cellfun(@(x) sum((x./repmat(TVARS{2}(:,2),1,size(x,2))) > repmat(threshvec,1,size(x,2)),2),VS(2,[3 4 6]),'uni',0); 
 
-VSFover_rand(1,[1 2]) = cellfun(@(x) sum((x./repmat(TVARS{1}(:,1),1,size(x,2)))>repmat(threshvec,1,size(x,2)),2),VSF(1,[1 2]),'uni',0); 
-VSFover_rand(2,[1 2]) = cellfun(@(x) sum((x./repmat(TVARS{2}(:,1),1,size(x,2)))>repmat(threshvec,1,size(x,2)),2),VSF(2,[1 2]),'uni',0); 
-VSFover_rand(1,[3 4]) = cellfun(@(x) sum((x./repmat(TVARS{1}(:,2),1,size(x,2)))>repmat(threshvec,1,size(x,2)),2),VSF(1,[3 4]),'uni',0); 
-VSFover_rand(2,[3 4]) = cellfun(@(x) sum((x./repmat(TVARS{2}(:,2),1,size(x,2)))>repmat(threshvec,1,size(x,2)),2),VSF(2,[3 4]),'uni',0); 
+VSFover_rand(1,[1 2]) = cellfun(@(x) sum((x./repmat(TVARS{1}(:,1),1,size(x,2)))>repmat(threshvecf,1,size(x,2)),2),VSF(1,[1 2]),'uni',0); 
+VSFover_rand(2,[1 2]) = cellfun(@(x) sum((x./repmat(TVARS{2}(:,1),1,size(x,2)))>repmat(threshvecf,1,size(x,2)),2),VSF(2,[1 2]),'uni',0); 
+VSFover_rand(1,[3 4]) = cellfun(@(x) sum((x./repmat(TVARS{1}(:,2),1,size(x,2)))>repmat(threshvecf,1,size(x,2)),2),VSF(1,[3 4]),'uni',0); 
+VSFover_rand(2,[3 4]) = cellfun(@(x) sum((x./repmat(TVARS{2}(:,2),1,size(x,2)))>repmat(threshvecf,1,size(x,2)),2),VSF(2,[3 4]),'uni',0); 
 
 Aunique_v_Iunique = {VSover_rand{1,1}-VSover_rand{1,3}; VSover_rand{2,1}-VSover_rand{2,3}}; 
 Aunique_v_Shared = {VSover_rand{1,1}-VSover_rand{1,2}; VSover_rand{2,1}-VSover_rand{2,2}}; 
